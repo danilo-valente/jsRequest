@@ -1,0 +1,102 @@
+<!DOCTYPE HTML>
+<html>
+	<head>
+		<script type="text/javascript" src="../../dist/jsRequest-1.0.0.min.js"></script>
+		<script type="text/javascript">
+		var success = function (url) {
+			var file = url.match(/[^\/]*$/)[0];
+			var bar = document.getElementById(file);
+			bar.className = 'progressbar success';
+			bar.style.width = '128px';
+			bar.innerHTML = 'loaded';
+		}
+		var failure = function (url) {
+			var file = url.match(/[^\/]*$/)[0];
+			var bar = document.getElementById(file);
+			bar.className = 'progressbar failure';
+			bar.style.width = '128px';
+			bar.innerHTML = 'error';
+		}
+		var progress = function (url, percentage) {
+			var file = url.match(/[^\/]*$/)[0];
+			var bar = document.getElementById(file);
+			bar.style.width = 'width: ' + (128 / 100 * percentage) + 'px';
+			bar.innerHTML = Math.round(percentage) + '%';
+		}
+		var options = {
+			success: success,
+			failure: failure,
+			progress: progress
+		};
+		jsRequest
+			.load('bigfile.js',options)
+			.load('doesnt-exist.js',options)
+			.load('http://code.jquery.com/jquery-1.10.2.js',options)
+			.wait('http://code.jquery.com/ui/1.10.3/jquery-ui.js',options)
+			.load('https://ajax.googleapis.com/ajax/libs/prototype/1.7.1.0/prototype.js',options)
+			.load('http://mootools.net/download/get/mootools-core-1.4.5-full-compat.js',options);
+		</script>
+		<style type="text/css">
+		body{
+			font-family: monospace;
+		}
+		.progressbar{
+			display: inline-block;
+			width: 0px;
+			height: 12px;
+			max-width: 128px;
+			margin: 4px;
+			text-align: center;
+			color: #FFF;
+			padding: 0px 0px 3px;
+		}
+		.progressbar.success{
+			background-color: #090;
+		}
+		.progressbar.failure{
+			background-color: #900;
+		}
+		.progressbar.loading{
+			background-color: #FF0;
+		}
+		</style>
+	</head>
+	<body>
+		<table>
+			<tr>
+				<td>bigfile.js</td>
+				<td>
+					<div id="bigfile.js" class="progressbar loading">0%</div>
+				</td>
+			</tr>
+			<tr>
+				<td>doesnt-exist.js</td>
+				<td>
+					<div id="doesnt-exist.js" class="progressbar loading">0%</div>
+				</td>
+			</tr>
+			<tr>
+				<td>jQuery 1.10.2</td>
+				<td>
+					<div id="jquery-1.10.2.js" class="progressbar loading">0%</div>
+				</td>
+				<td>jQuery UI 1.10.3</td>
+				<td>
+					<div id="jquery-ui.js" class="progressbar loading">0%</div><br />
+				</td>
+			</tr>
+			<tr>
+				<td>Prototype.js</td>
+				<td>
+					<div id="prototype.js" class="progressbar loading">0%</div>
+				</td>
+			</tr>
+			<tr>
+				<td>MooTools</td>
+				<td>
+					<div id="mootools-core-1.4.5-full-compat.js" class="progressbar loading">0%</div>
+				</td>
+			</tr>
+		</table>
+	</body>
+</html>

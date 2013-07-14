@@ -1,0 +1,126 @@
+<!DOCTYPE HTML>
+<html>
+	<head>
+		<script type="text/javascript" src="../../dist/jsRequest-1.0.0.min.js"></script>
+		<script type="text/javascript">
+		var r = 54;
+		var d = r + 4;
+		var canvas = null;
+		var ctx = null;
+		var w = 0;
+		var h = 0;
+		var files = {
+			'jquery-1.10.2.js': {
+				position: {
+					x: d,
+					y: d
+				},
+				label: 'jQuery 1.10.2'
+			},
+			'jquery-ui.js': {
+				position: {
+					x: d,
+					y: 3*d
+				},
+				label: 'jQuery UI 1.10.3'
+			},
+			'prototype.js': {
+				position: {
+					x: 3*d,
+					y: d
+				},
+				label: 'Prototype.js 1.7.1.0'
+			},
+			'mootools-core-1.4.5-full-compat.js': {
+				position: {
+					x: 5*d,
+					y: d
+				},
+				label: 'MooTools 1.4.5'
+			},
+			'bigfile.js': {
+				position: {
+					x: 7*d,
+					y: d
+				},
+				label: 'bigfile.js'
+			},
+			'doesnt-exist.js': {
+				position: {
+					x: 9*d,
+					y: d
+				},
+				label: 'doesnt-exist.js'
+			}
+		};
+		var draw = function (file, status, percentage) {
+			var x = files[file].position.x;
+			var y = files[file].position.y;
+			
+			ctx.beginPath();
+			ctx.fillStyle = '#FF0000';
+			ctx.arc(x, y, r, 0, 2 * Math.PI);
+			ctx.fill();
+			ctx.closePath();
+			
+			ctx.beginPath();
+			if (status === 'failure') {
+				ctx.fillStyle = '#FFFFFF';
+			} else {
+				if (status === 'success') {
+					ctx.fillStyle = '#009900';
+					ctx.arc(x, y, r, 0, 2 * Math.PI);
+					ctx.fill();
+					
+					ctx.fillStyle = '#FFFFFF';
+				} else {
+					ctx.fillStyle = '#FFFF00';
+					ctx.arc(x, y, r, 0, 2 * Math.PI * percentage / 100);
+					ctx.lineTo(x, y);
+					ctx.fill();
+					
+					ctx.fillStyle = '#000000';
+				}
+			}
+			ctx.fillText(files[file].label, x - r + 16, y + 2);
+			ctx.closePath();
+		};
+		var success = function (url) {
+			var file = url.match(/[^\/]*$/)[0];
+			draw(file, 'success');
+		}
+		var failure = function (url) {
+			var file = url.match(/[^\/]*$/)[0];
+			draw(file, 'failure');
+		}
+		var progress = function (url, percentage) {
+			var file = url.match(/[^\/]*$/)[0];
+			draw(file, 'loading', percentage);
+		};
+		/*
+		 * Works as DOM 'load' event
+		 */
+		jsRequest.wait(function () {
+			canvas = document.getElementById('canvas');
+			ctx = canvas.getContext('2d');
+			w = canvas.width;
+			h = canvas.height;
+			var options = {
+				success: success,
+				failure: failure,
+				progress: progress
+			};
+			jsRequest
+				.load('bigfile.js',options)
+				.load('doesnt-exist.js',options)
+				.load('http://code.jquery.com/jquery-1.10.2.js',options)
+				.wait('http://code.jquery.com/ui/1.10.3/jquery-ui.js',options)
+				.load('https://ajax.googleapis.com/ajax/libs/prototype/1.7.1.0/prototype.js',options)
+				.load('http://mootools.net/download/get/mootools-core-1.4.5-full-compat.js',options);
+		});
+		</script>
+	</head>
+	<body>
+		<canvas id="canvas" width="800" height="600"></canvas>
+	</body>
+</html>

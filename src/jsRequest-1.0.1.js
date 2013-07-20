@@ -1,9 +1,9 @@
 (function (window, waitForBody) {
 	'use strict';
-
+	
 	var doc = window.document;
 	var isModule = typeof (module) === 'object' && !!module && typeof (module.exports) === 'object';
-
+	
 	/*
 	 * XMLHttpRequest compatibility
 	 */
@@ -22,9 +22,9 @@
 			return null;
 		};
 	})();
-
+	
 	/*
-	 * Private
+	 * jsRequest
 	 */
 	var tasks = [];
 	var callbacks = {};
@@ -32,11 +32,11 @@
 	var lastAdded = null;
 	var history = [];
 	var files = {};
-
+	
 	var isFn = function (fn) {
 		return fn instanceof Function;
 	};
-
+	
 	var attachEvent = function (target, event, action) {
 		event = 'on' + event;
 		target[event] = !isFn(target[event]) ? action : function () {
@@ -48,7 +48,7 @@
 			action.apply(this, arguments);
 		};
 	};
-
+	
 	var addEvent = (function () {
 		if (!!window.addEventListener) {
 			return function (target, event, action) {
@@ -68,7 +68,7 @@
 		}
 		return attachEvent;
 	})();
-
+	
 	var isReady = (function () {
 		if(isModule) {
 			return function () {
@@ -84,7 +84,7 @@
 			return doc.readyState === 'complete';
 		};
 	})();
-
+	
 	var scheduleTask = function (task) {
 		if (isReady()) {
 			task.call();
@@ -92,24 +92,24 @@
 			tasks.push(task);
 		}
 	};
-
-	var runCallbacks = function (callbacks, context, args) {
+	
+	var runCallbacks = function (callbacks, scope, args) {
 		while (callbacks.length > 0) {
 			try {
-				callbacks.shift().apply(context, args);
+				callbacks.shift().apply(scope, args);
 			} catch (ex) {
 				console.error(ex.stack);
 			}
 		}
 	};
-
+	
 	var runScript = function (code) {
 		var script = doc.createElement('script');
 		script.setAttribute('type', 'text/javascript');
 		script.text = code;
 		doc.getElementsByTagName('head')[0].appendChild(script);
 	};
-
+	
 	var parseURL = function (url) {
 		if (typeof (url) !== 'string') {
 			url = '';
@@ -138,9 +138,9 @@
 			query	: !pieces.query		? l.query		: pieces.query
 		};
 	};
-
+	
 	var jsRequest;
-
+	
 	/*
 	 * Loads the script from a script tag
 	 */
@@ -221,7 +221,7 @@
 			doc.getElementsByTagName('head')[0].appendChild(script);
 		};
 	};
-
+	
 	/*
 	 * Loads the JavaScript file from an AJAX call
 	 */
@@ -291,7 +291,7 @@
 			xhr.send();
 		};
 	};
-
+	
 	/*
 	 * Validates options. If the second argument is an function, it's interpreted as
 	 * the 'success' function. Thus when we receive something like this:
@@ -320,7 +320,7 @@
 			progress: isFn(options.progress) ? options.progress : function () {}
 		};
 	};
-
+	
 	/*
 	 * The jsRequest object
 	 */
@@ -330,21 +330,17 @@
 		 */
 		about: {
 			NAME: 'jsRequest',
-			VERSION: '1.0.0',
-			DATE: '2013-07-14 (yyyy-mm-dd)',
+			VERSION: '1.0.1',
+			DATE: '2013-07-20 (yyyy-mm-dd)',	// yyyy-mm-dd
 			DESCRIPTION: 'A JavaScript framework for fast and easy asynchronous JavaScript files loading',
 			AUTHORS: [
 				{
 					NAME: 'Danilo Marcolino Valente',
-					NICK: 'Mark Linus',
-					EMAIL: 'dani_lovalente@hotmail.com',
-					PAGE: 'https://github.com/MarkLinus'
+					EMAIL: 'dani_lovalente@hotmail.com'
 				},
 				{
 					NAME: 'Bruno Lu\u00EDs Panuto Silva',
-					NICK: 'The Panuto',
-					EMAIL: 'bl.panuto@gmail.com',
-					PAGE: 'https://github.com/ThePanuto'
+					EMAIL: 'bl.panuto@gmail.com'
 				}
 			],
 			COPYRIGHT: '(C)2013 by Danilo Marcolino Valente and Bruno Lu\u00EDs Panuto Silva'
@@ -359,11 +355,12 @@
 		files: files,
 		/*
 		 * Load's a JavaScript file in two different ways:
-		 * - Inserts a script tag that receives the file's url as value of the "src" parameter
+		 * <ul>
+		 * <li>Inserts a script tag that receives the file's url as value of the "src" parameter
 		 * if the requested file is in another server or the current page is running under
-		 * the "file://" protocol
-		 * - Makes an Ajax call and executes the returned content as JavaScript script if the
-		 * requested file is stored in the same server of the current page
+		 * the "file://" protocol</li>
+		 * <li>Makes an Ajax call and executes the returned content as JavaScript script if the
+		 * requested file is stored in the same server of the current page</li>.
 		 *
 		 * The first argument is always a string containing the url of the requested file. However,
 		 * the second one can be both an object that contains a set of options or a function called
@@ -397,39 +394,48 @@
 		/*
 		 * Executes a callback function right after the last requested file is loaded.
 		 * If the provided action is actually a string, then we assume it's an url and
-		 * the user wants to load it. So, 'jsRequest.wait("foo/bar.js");' is
-		 * exactly the same of jsRequest.wait(function(){ jsRequest.load("foo/bar.js"); });.
+		 * the user wants to load it. So, <pre>jsRequest.wait("foo/bar.js");</pre> is
+		 * exactly the same of <pre>jsRequest.wait(function(){ jsRequest.load("foo/bar.js"); });</pre>.
 		 * Also, in this case we consider that the user may have also provided a second
 		 * argument, which is passed to jsRequest.load as the options argument.
 		 * There is also a third function overload, which takes two arguments, the file's
 		 * url and a function, which is considered as the callback in case of success.
-		 * Thus, jsRequest.load("foo/bar.js", function(){}); is the same of
-		 * jsRequest.load("foo/bar.js", {success: function(){}});.
+		 * Thus, <pre>jsRequest.load("foo/bar.js", function(){});</pre> is the same of
+		 * jsRequest.load("foo/bar.js", {success: function(){}});</pre>.
 		 */
 		wait: function (action) {
-			if (typeof (action) === 'string') {
+			/*
+			 * Issue #1:
+			 * - Bug: Changing the original reference of 'action' also changes the original
+			 *     reference of 'arguments[0]' in the non-strict mode. Thus, 'arguments[0]'
+			 *     would be a function rather than a string
+			 * - Solution: Created a var called '_action' instead of changing the original
+			 *     reference of 'action'
+			 */
+			var _action = action;
+			if (typeof (_action) === 'string') {
 				var args = arguments;
-				action = function () {
+				_action = function () {
 					jsRequest.load.apply(this, args);
 				}
 			}
-			if (!isFn(action)) {
-				action = function () {};
+			if (!isFn(_action)) {
+				_action = function () {};
 			}
 			var target = lastAdded;
 			if (target === null) {
 				if (isReady()) {
-					runCallbacks([action], jsRequest);
+					runCallbacks([_action], jsRequest);
 				} else {
-					pageCallbacks.push(action);
+					pageCallbacks.push(_action);
 				}
 			} else {
-				callbacks[target].push(action);
+				callbacks[target].push(_action);
 			}
 			return jsRequest;
 		}
 	};
-
+	
 	/*
 	 * Called once the page is loaded
 	 */
@@ -439,7 +445,7 @@
 			tasks.shift().call();
 		}
 	};
-
+	
 	/*
 	 * Expose
 	 */

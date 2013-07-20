@@ -336,11 +336,15 @@
 			AUTHORS: [
 				{
 					NAME: 'Danilo Marcolino Valente',
-					EMAIL: 'dani_lovalente@hotmail.com'
+					NICK: 'Mark Linus',
+					EMAIL: 'dani_lovalente@hotmail.com',
+					PAGE: 'https://github.com/MarkLinus'
 				},
 				{
 					NAME: 'Bruno Lu\u00EDs Panuto Silva',
-					EMAIL: 'bl.panuto@gmail.com'
+					NICK: 'The Panuto',
+					EMAIL: 'bl.panuto@gmail.com',
+					PAGE: 'https://github.com/ThePanuto'
 				}
 			],
 			COPYRIGHT: '(C)2013 by Danilo Marcolino Valente and Bruno Lu\u00EDs Panuto Silva'

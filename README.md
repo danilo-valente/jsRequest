@@ -1,4 +1,4 @@
-[jsRequest](https://github.com/MarkLinus/jsRequest)
+[jsRequest](https://github.com/Panamark/jsRequest)
 ===================================================
 
 A JavaScript framework for fast and easy asynchronous JavaScript files loading

@@ -285,4 +285,4 @@ and [The Panuto](https://github.com/ThePanuto/)
 License
 =======
 
-See [LICENSE.md](https://github.com/MarkLinus/jsRequest/blob/master/LICENSE.md)
+See [LICENSE.md](https://github.com/Panamark/jsRequest/blob/master/LICENSE.md)

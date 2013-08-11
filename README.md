@@ -59,7 +59,7 @@ Usage & Syntax
 
 It's very simple to use jsRequest. First, you need to include it in your page:
 ```html
-<script type="text/javascript" src="jsRequest-1.0.1.min"></script>
+<script type="text/javascript" src="jsRequest-1.0.1.min.js"></script>
 ```
 
 Then you just need to invoke its methods. In most cases you won't need more than ten lines of code, like

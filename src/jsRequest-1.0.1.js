@@ -326,30 +326,6 @@
 	 */
 	jsRequest = {
 		/*
-		 * Main information about jsRequest and its authors
-		 */
-		about: {
-			NAME: 'jsRequest',
-			VERSION: '1.0.1',
-			DATE: '2013-07-20 (yyyy-mm-dd)',	// yyyy-mm-dd
-			DESCRIPTION: 'A JavaScript framework for fast and easy asynchronous JavaScript files loading',
-			AUTHORS: [
-				{
-					NAME: 'Danilo Marcolino Valente',
-					NICK: 'Mark Linus',
-					EMAIL: 'dani_lovalente@hotmail.com',
-					PAGE: 'https://github.com/MarkLinus'
-				},
-				{
-					NAME: 'Bruno Lu\u00EDs Panuto Silva',
-					NICK: 'The Panuto',
-					EMAIL: 'bl.panuto@gmail.com',
-					PAGE: 'https://github.com/ThePanuto'
-				}
-			],
-			COPYRIGHT: '(C)2013 by Danilo Marcolino Valente and Bruno Lu\u00EDs Panuto Silva'
-		},
-		/*
 		 * An array containing information about each loaded file, sorted by time
 		 */
 		history: history,

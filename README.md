@@ -3,7 +3,7 @@
 
 A JavaScript framework for fast and easy asynchronous JavaScript files loading
 
-Copyright (C) 2013 [Mark Linus](https://github.com/MarkLinus/) and [The Panuto](https://github.com/ThePanuto/)
+Copyright (C) 2013 [Danilo Marcolino Valente](https://github.com/MarkLinus/) and [Bruno Luis Panuto Silva](https://github.com/ThePanuto/)
 
 ### Quick Index
 

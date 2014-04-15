@@ -1,9 +1,9 @@
-[jsRequest](https://github.com/MarkLinus/jsRequest)
+[jsRequest](https://github.com/danilo-valente/jsRequest)
 ===================================================
 
 A JavaScript framework for fast and easy asynchronous JavaScript files loading
 
-Copyright (C) 2013 [Danilo Marcolino Valente](https://github.com/MarkLinus/) and [Bruno Luis Panuto Silva](https://github.com/ThePanuto/)
+Copyright (C) 2013 [Danilo Marcolino Valente](https://github.com/danilo-valente/) and [Bruno Luis Panuto Silva](https://github.com/ThePanuto/)
 
 ### Quick Index
 

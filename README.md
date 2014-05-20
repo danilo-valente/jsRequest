@@ -279,7 +279,7 @@ jsRequest
 
 Authors
 =======
-This project was developed and is currently being maintened by [Mark Linus](https://github.com/MarkLinus/)
+This project was developed and is currently being maintened by [Danilo Valente](https://github.com/danilo-valente/)
 and [The Panuto](https://github.com/ThePanuto/)
 
 License

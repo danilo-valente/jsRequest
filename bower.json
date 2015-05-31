@@ -1,0 +1,40 @@
+{
+  "name": "jsRequest",
+  "main": "dist/jsRequest.js",
+  "version": "1.0.1",
+  "homepage": "https://github.com/danilo-valente/jsRequest",
+  "authors": [
+    {
+      "name": "Danilo Valente",
+      "email": "danilovalente96@gmail.com"
+    },
+    {
+      "name": "Bruno Luis Panuto Silva",
+      "email": "bl.panuto@gmail.com"
+    }
+  ],
+  "description": "A JavaScript framework for fast and easy asynchronous JavaScript files loading",
+  "moduleType": [
+    "globals",
+    "node"
+  ],
+  "keywords": [
+    "request",
+    "ajax",
+    "js",
+    "javascript",
+    "async",
+    "asynchronous",
+    "load",
+    "external",
+    "require"
+  ],
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ]
+}

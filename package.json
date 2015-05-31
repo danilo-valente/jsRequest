@@ -1,0 +1,54 @@
+{
+  "name": "jsRequest",
+  "version": "1.0.1",
+  "description": "A JavaScript framework for fast and easy asynchronous JavaScript files loading",
+  "main": "index.js",
+  "directories": {
+    "example": "examples"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/danilo-valente/jsRequest.git"
+  },
+  "keywords": [
+    "request",
+    "ajax",
+    "js",
+    "javascript",
+    "async",
+    "asynchronous",
+    "load",
+    "external",
+    "require"
+  ],
+  "author": {
+    "name": "Danilo Valente",
+    "email": "danilovalente96@gmail.com"
+  },
+  "contributors": [
+    {
+      "name": "Bruno Luis Panuto Silva",
+      "email": "bl.panuto@gmail.com"
+    }
+  ],
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/danilo-valente/jsRequest/issues"
+  },
+  "homepage": "https://github.com/danilo-valente/jsRequest",
+  "devDependencies": {
+    "gulp": "^3.8.11",
+    "gulp-connect": "^2.2.0",
+    "gulp-jshint": "^1.11.0",
+    "gulp-notify": "^2.2.0",
+    "gulp-rename": "^1.2.2",
+    "gulp-size": "^1.2.1",
+    "gulp-template": "^3.0.0",
+    "gulp-throttle": "0.0.2",
+    "gulp-uglify": "^1.2.0",
+    "jshint-stylish": "^2.0.0"
+  }
+}

@@ -49,12 +49,12 @@
         return attachEvent;
     })();
 
-    var tasks = [];
-    var callbacks = {};
-    var pageCallbacks = [];	// Called when the page is loaded (see function `change` in the bottom)
-    var lastAdded = null;
-    var history = [];		// An array containing information about each loaded file, sorted by time
-    var files = {};			// An associative array containing information about each loaded file
+    var $tasks = [];
+    var $pageCallbacks = [];    // Called when the page is loaded (see function `change` in the bottom)
+    var $lastAdded = null;
+    var $history = [];          // An array containing information about each loaded file, sorted by time
+    var $files = {};			// A map containing information about each loaded file
+    var $handlers = {};         // A map containing all handlers of each url
 
     // Wait for page loading
     var isPageLoaded = false;
@@ -69,8 +69,8 @@
      */
     var jsRequest = {
         version: '<%= version %>',
-        history: history,
-        files: files,
+        history: $history,
+        files: $files,
         load: load,
         wait: wait
     };
@@ -97,20 +97,30 @@
      */
     function load() {
         var argc = arguments.length;
-        var options = normOptions(argc>1 && typeof (argc - 1) !== 'string' ? arguments[--argc] : null);
+        var handlers = getHandlers(argc >= 1 && typeof arguments[argc - 1] !== 'string' ? arguments[--argc] : null);
+
         for (var i = 0; i < argc; i++) {
             var url = arguments[i];
-            lastAdded = url;
-            if (!callbacks[url]) {
-                callbacks[url] = [];
+            $lastAdded = url;
+
+            if (!$handlers[url]) {
+                $handlers[url] = [];
             }
-            if (typeof (url) === 'string') {
+            $handlers[url].push(handlers);
+
+            var cachedFile = $files[url];
+            if (cachedFile && cachedFile.state !== 'failure') {
+                if (cachedFile.state === 'success') {
+                    scheduleTask(cacheTask(url));
+                }
+            } else if (typeof (url) === 'string') {
                 scheduleTask(isLocal || isExternal(url) || !newXhr
-                        ? scriptTagTask(url, options)
-                        : ajaxTask(url, options)
+                        ? scriptTagTask(url)
+                        : ajaxTask(url)
                 );
             }
         }
+
         return jsRequest;
     }
 
@@ -136,7 +146,7 @@
          *     reference of 'action'
          */
         var _action = action;
-        if (typeof (_action) === 'string') {
+        if (typeof _action === 'string') {
             var args = arguments;
             _action = function () {
                 jsRequest.load.apply(this, args);
@@ -145,16 +155,18 @@
         if (!isFunction(_action)) {
             _action = noop;
         }
-        var target = lastAdded;
-        if (target === null) {
+
+        var target = $lastAdded;
+        if (!target) {
             if (isReady()) {
-                runCallbacks([_action], jsRequest);
+                run(_action);
             } else {
-                pageCallbacks.push(_action);
+                $pageCallbacks.push(_action);
             }
         } else {
-            callbacks[target].push(_action);
+            $handlers[target].push({ success: _action });
         }
+
         return jsRequest;
     }
 
@@ -165,64 +177,40 @@
         }
     }
 
-    /*
+    /**
      * Called once the page is loaded
      */
     function init() {
         head = document.head || document.getElementsByTagName('head')[0];
-        runCallbacks(pageCallbacks, jsRequest);
-        while (tasks.length > 0) {
-            tasks.shift().call();
+        while ($pageCallbacks.length > 0) {
+            run($pageCallbacks.shift());
+        }
+        while ($tasks.length > 0) {
+            $tasks.shift().call();
         }
     }
 
     /**
      * Loads the script from a script tag
-     * @param url
-     * @param options
+     * @param {string} url
      * @returns {Function}
      */
-    function scriptTagTask(url, options) {
+    function scriptTagTask(url) {
         return function () {
-            var startDate = new Date().getTime();
-            var script = scriptTag(url);
 
             var info = {
                 url: url,
-                startDate: startDate,
-                state: 'failure',
+                startDate: new Date().getTime(),
+                endDate: null,
+                state: 'loading',
                 size: 0
             };
+            $files[url] = info;
 
-            /*
-             * User-defined events
-             */
+            var script = scriptTag(url);
 
-            var success = function (e) {
-                // Progress
-                run(options.progress, [url, 100, null, 'ajax', e]);
-
-                // Success
-                info.state = 'success';
-                info.endDate = new Date().getTime();
-                history.push(info);
-                files[url] = info;
-                var args = [url, null, 'scripttag', e];
-                runCallbacks(callbacks[url], jsRequest);
-                run(options.success, args);
-            };
-
-            var failure = function (e) {
-                info.state = 'failure';
-                info.endDate = new Date().getTime();
-                history.push(info);
-                files[url] = info;
-                var args = [url, null, 'scripttag', e];
-                run(options.failure, args);
-            };
-
-            var hasOnloadEvent = navigator.appName !== 'Microsoft Internet Explorer' || window.addEventListener;
-            if (hasOnloadEvent) {
+            var onloadSupported = navigator.appName !== 'Microsoft Internet Explorer' || window.addEventListener;
+            if (onloadSupported) {
                 // For good browsers only
                 addEvent(script, 'load', success);
                 addEvent(script, 'error', failure);
@@ -237,6 +225,30 @@
                 });
             }
             head.appendChild(script);
+
+            function success(e) {
+                // Progress
+                callHandlers(url, 'progress', [url, 100, null, 'scripttag', e]);
+
+                // Success
+                info.state = 'success';
+                info.endDate = new Date().getTime();
+                $history.push(info);
+                $files[url] = info;
+
+                callHandlers(url, 'success', [url, null, 'scripttag', e]);
+                $handlers[url] = [];    // Wipe all handlers
+            }
+
+            function failure(e) {
+                info.state = 'failure';
+                info.endDate = new Date().getTime();
+                $history.push(info);
+                $files[url] = info;
+
+                callHandlers(url, 'failure', [url, null, 'scripttag', e]);
+                $handlers[url] = [];    // Wipe all handlers
+            }
         };
     }
 
@@ -255,14 +267,22 @@
 
     /**
      * Loads the JavaScript file from an AJAX call
-     * @param url
-     * @param options
+     * @param {string} url
      * @returns {Function}
      */
-    function ajaxTask(url, options) {
+    function ajaxTask(url) {
         return function () {
+
+            var info = {
+                url: url,
+                startDate: new Date().getTime(),
+                endDate: null,
+                state: 'loading',
+                size: 0
+            };
+            $files[url] = info;
+
             var xhr = newXhr();
-            var startDate = new Date().getTime();
             xhr.open('GET', url);
             xhr.setRequestHeader('Content-Type', 'text/javascript; charset=utf-8');
             if (xhr.overrideMimeType) {
@@ -278,35 +298,59 @@
 
                     case 3:
                         // Progress
-                        run(options.progress, [url, 100 * xhr.response.length / total, xhr, 'ajax', e]);
+                        callHandlers(url, 'progress', [url, 100 * xhr.response.length / total, xhr, 'ajax', e]);
                         break;
 
                     case 4: {
                         var success = (this.status >= 200 && this.status < 300) || this.status === 304;
-                        var info = {
-                            url: url,
-                            startDate: startDate,
-                            endDate: new Date().getTime(),
-                            state: success ? 'success' : 'failure',
-                            size: total
-                        };
-                        history.push(info);
-                        files[url] = info;
+
+                        info.endDate = new Date().getTime();
+                        info.state = success ? 'success' : 'failure';
+                        info.size = total;
+                        $history.push(info);
+                        $files[url] = info;
+
                         var args = [url, xhr, 'ajax', e];
                         if (success) {
-                            // Success
-                            runScript(this.response || this.responseText);
-                            runCallbacks(callbacks[url], jsRequest);
-                            run(options.success, args);
+                            evalScript(this.response || this.responseText);
+                            callHandlers(url, 'success', args);
                         } else {
-                            // Failure
-                            run(options.failure, args);
+                            callHandlers(url, 'failure', args);
                         }
+
+                        // Wipe all handlers
+                        $handlers[url] = [];
                         break;
                     }
                 }
             });
             xhr.send();
+        };
+    }
+
+    /**
+     * Loads the script from cache
+     * @param url
+     * @param options
+     * @returns {Function}
+     */
+    function cacheTask(url) {
+        return function () {
+            // Progress
+            callHandlers(url, 'progress', [url, 100, null, 'cache', null]);
+
+            var cachedFile = $files[url];
+            $history.push({
+                url: url,
+                startDate: cachedFile.startDate,
+                endDate: cachedFile.endDate,
+                state: 'cached',
+                size: cachedFile.size
+            });
+
+            // Success
+            callHandlers(url, 'success', [url, null, 'cache', null]);
+            $handlers[url] = [];    // Wipe all handlers
         };
     }
 
@@ -323,23 +367,23 @@
      * 		}
      * 	});
      *
-     * @param options
+     * @param handlers
      * @returns {*}
      */
-    function normOptions(options) {
-        if (isFunction(options)) {
+    function getHandlers(handlers) {
+        if (isFunction(handlers)) {
             return {
-                success: options,
+                success: handlers,
                 failure: noop,
                 progress: noop
             };
         }
 
-        options = options || {};
+        handlers = handlers || {};
         return {
-            success: isFunction(options.success) ? options.success : noop,
-            failure: isFunction(options.failure) ? options.failure : noop,
-            progress: isFunction(options.progress) ? options.progress : noop
+            success: isFunction(handlers.success) ? handlers.success : noop,
+            failure: isFunction(handlers.failure) ? handlers.failure : noop,
+            progress: isFunction(handlers.progress) ? handlers.progress : noop
         };
     }
 
@@ -348,17 +392,13 @@
     }
 
     function isReady() {
-        return document.readyState === 'complete' && document.body !== null;
+        return document.readyState === 'complete' && document.body;
     }
 
     function attachEvent(target, event, action) {
         event = 'on' + event;
         target[event] = !isFunction(target[event]) ? action : function () {
-            try {
-                target[event].apply(this, arguments);
-            } catch (err) {
-                console.error(err.stack);
-            }
+            run(target[event], arguments, this);
             action.apply(this, arguments);
         };
     }
@@ -367,21 +407,15 @@
         if (isReady()) {
             task.call();
         } else {
-            tasks.push(task);
+            $tasks.push(task);
         }
     }
 
-    function runCallbacks(callbacks, scope, args) {
-        while (callbacks.length > 0) {
-            try {
-                callbacks.shift().apply(scope, args);
-            } catch (err) {
-                console.error(err.stack);
-            }
-        }
-    }
-
-    function runScript(code) {
+    /**
+     * Evaluate JavaScript code
+     * @param code
+     */
+    function evalScript(code) {
         var script = document.createElement('script');
         script.setAttribute('type', 'text/javascript');
         script.text = code;
@@ -397,9 +431,33 @@
         return (a.hostname || location.hostname) !== location.hostname;
     }
 
-    function run(fn, args) {
+    /**
+     * Call all handlers for a given url
+     * @param url
+     * @param type
+     * @param args
+     */
+    function callHandlers(url, type, args) {
+        var handlers = $handlers[url];
+        var i, len = handlers.length;
+        for (i = 0; i < len; i++) {
+            run(handlers[i][type], args);
+        }
+    }
+
+    /**
+     * Safely run a function
+     * @param fn
+     * @param {(Object[]|Arguments)} [args=[]]
+     * @param {Object} [scope=jsRequest]
+     * @returns {*}
+     */
+    function run(fn, args, scope) {
+        if (!fn) {
+            return;
+        }
         try {
-            return fn.apply(jsRequest, args);
+            return fn.apply(scope || jsRequest, args || []);
         } catch (err) {
             console.error(err.stack);
         }

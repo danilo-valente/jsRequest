@@ -18,7 +18,7 @@ Copyright (C) 2015 [Danilo Marcolino Valente](https://github.com/danilo-valente/
    - [History](#history)
    - [Files information](#files-information)
  - [Compatibility](#compatibility)
- - [Known bugs](#known-bugs)
+ - [Known issues](#known-issues)
  - [Authors](#authors)
  - [License](#license)
 
@@ -248,18 +248,18 @@ jsRequest.load("myScript.js", function (url) {
 Compatibility
 =============
 
-jsRequest was tested and worked on these browsers:
+jsRequest was tested and works on these browsers:
 
  * Google Chrome 28.0
  * Mozilla Firefox 22.0
  * Opera 15.0
  * Safari 5.1
- * Internet Explorer 5+
+ * Internet Explorer 8+
 
 It may also work on other browsers or older versions of the mentioned above. However, they weren't tested yet.
 
-Known bugs
-==========
+Known issues
+============
 
 Since IE \<9 doesn't support the `onload` and `onerror` events for `<script>` tags, the `failure` callback
 doesn't work on these versions, and therefore it always calls the `success` callback.

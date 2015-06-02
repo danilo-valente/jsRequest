@@ -16,7 +16,7 @@ Copyright (C) 2015 [Danilo Marcolino Valente](https://github.com/danilo-valente/
    - [Being pacient - The `.wait` method](#being-pacient---the-wait-method)
  - [Other Features](#other-features)
    - [History](#history)
-   - [Files information](#files-information)
+   - [Files cache](#files-cache)
  - [Compatibility](#compatibility)
  - [Known issues](#known-issues)
  - [Authors](#authors)
@@ -232,7 +232,7 @@ ending date and status. This object is described below:
 ```
 The history is a property of `jsRequest` can be accessed by `jsRequest.history`.
 
-### Files information
+### Files cache
 
 Very similar to the history, the files information is an object where each requested and successfully downloaded file
 is an associative index (aka "key") of this object, and each element is an object with the same structure described

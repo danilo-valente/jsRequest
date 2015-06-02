@@ -100,7 +100,7 @@
         var handlers = getHandlers(argc >= 1 && typeof arguments[argc - 1] !== 'string' ? arguments[--argc] : null);
 
         for (var i = 0; i < argc; i++) {
-            var url = arguments[i];
+            var url = anchor(arguments[i]).href;
             $lastAdded = url;
 
             if (!$handlers[url]) {
@@ -114,7 +114,7 @@
                     scheduleTask(cacheTask(url));
                 }
             } else if (typeof (url) === 'string') {
-                scheduleTask(isLocal || isExternal(url) || !newXhr
+                scheduleTask(isLocal || anchor(url).hostname !== location.hostname || !newXhr
                         ? scriptTagTask(url)
                         : ajaxTask(url)
                 );
@@ -142,29 +142,27 @@
          * - Bug: Changing the original reference of 'action' also changes the original
          *     reference of 'arguments[0]' in the non-strict mode. Thus, 'arguments[0]'
          *     would be a function rather than a string
-         * - Solution: Created a var called '_action' instead of changing the original
+         * - Solution: Created a var called 'fn' instead of changing the original
          *     reference of 'action'
          */
-        var _action = action;
-        if (typeof _action === 'string') {
+        var fn = action;
+        if (typeof fn === 'string') {
             var args = arguments;
-            _action = function () {
+            fn = function () {
                 jsRequest.load.apply(this, args);
             };
-        }
-        if (!isFunction(_action)) {
-            _action = noop;
+        } else if (!isFunction(fn)) {
+            fn = noop;
         }
 
-        var target = $lastAdded;
-        if (!target) {
+        if (!$lastAdded) {
             if (isReady()) {
-                run(_action);
+                run(fn);
             } else {
-                $pageCallbacks.push(_action);
+                $pageCallbacks.push(fn);
             }
         } else {
-            $handlers[target].push({ success: _action });
+            $handlers[$lastAdded].push({ success: fn });
         }
 
         return jsRequest;
@@ -422,13 +420,15 @@
         head.appendChild(script);
     }
 
-    function isExternal(url) {
-        if (typeof url !== 'string') {
-            return false;
-        }
-        var a = document.createElement('a');
+    /**
+     * Create a new HTMLAnchorElement pointing to a given url
+     * @param {string} url
+     * @returns {HTMLAnchorElement}
+     */
+    function anchor(url) {
+        var a = /** @type HTMLAnchorElement */ document.createElement('a');
         a.href = url;
-        return (a.hostname || location.hostname) !== location.hostname;
+        return a;
     }
 
     /**

@@ -390,7 +390,7 @@
     }
 
     function isReady() {
-        return document.readyState === 'complete' && document.body;
+        return document.readyState === 'complete';
     }
 
     function attachEvent(target, event, action) {

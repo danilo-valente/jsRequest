@@ -64,16 +64,17 @@
     change();	// If the page is already loaded, the events above won't be fired
 
     /**
-     * The jsRequest object
-     * @type {{version: string, history: Array, files: {}, load: load, wait: wait}}
+     * The jsRequest function
      */
-    var jsRequest = {
-        version: '<%= version %>',
-        history: $history,
-        files: $files,
-        load: load,
-        wait: wait
+    var jsRequest = function () {
+        return jsRequest.wait.apply(jsRequest, args);
     };
+
+    jsRequest.version = '<%= version %>';
+    jsRequest.history = $history;
+    jsRequest.files = $files;
+    jsRequest.load = load;
+    jsRequest.wait = wait;
 
     /**
      * Load's a JavaScript file in two different ways:

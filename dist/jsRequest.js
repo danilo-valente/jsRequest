@@ -64,16 +64,17 @@
     change();	// If the page is already loaded, the events above won't be fired
 
     /**
-     * The jsRequest object
-     * @type {{version: string, history: Array, files: {}, load: load, wait: wait}}
+     * The jsRequest function
      */
-    var jsRequest = {
-        version: '1.0.1',
-        history: $history,
-        files: $files,
-        load: load,
-        wait: wait
+    var jsRequest = function () {
+        return jsRequest.wait.apply(jsRequest, args);
     };
+
+    jsRequest.version = '1.0.1';
+    jsRequest.history = $history;
+    jsRequest.files = $files;
+    jsRequest.load = load;
+    jsRequest.wait = wait;
 
     /**
      * Load's a JavaScript file in two different ways:
@@ -390,7 +391,7 @@
     }
 
     function isReady() {
-        return document.readyState === 'complete' && document.body;
+        return document.readyState === 'complete';
     }
 
     function attachEvent(target, event, action) {

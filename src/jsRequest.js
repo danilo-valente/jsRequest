@@ -55,6 +55,8 @@
     var $history = [];          // An array containing information about each loaded file, sorted by time
     var $files = {};			// A map containing information about each loaded file
     var $handlers = {};         // A map containing all handlers of each url
+    var $bundles = {};          // A map containing all user-defined bundles
+    window.handlers = $handlers;
 
     // Wait for page loading
     var isPageLoaded = false;
@@ -75,6 +77,11 @@
     jsRequest.files = $files;
     jsRequest.load = load;
     jsRequest.wait = wait;
+    jsRequest.bundle = bundle
+    // TODO: jsRequest.sequence(['A', 'B', 'C']) // A->B->C
+    // TODO: jsRequest.then // sequential jsRequest.wait(...).wait(...)
+    // TODO: deprecate jsRequest.wait
+    // TODO: load bundle from bundle
 
     /**
      * Load's a JavaScript file in two different ways:
@@ -98,31 +105,54 @@
      */
     function load() {
         var argc = arguments.length;
-        var handlers = getHandlers(argc >= 1 && typeof arguments[argc - 1] !== 'string' ? arguments[--argc] : null);
+        var handlers = getHandlers(argc >= 1 && !isString(arguments[argc - 1]) ? arguments[--argc] : null);
 
         for (var i = 0; i < argc; i++) {
-            var url = anchor(arguments[i]).href;
-            $lastAdded = url;
+            var id = arguments[i];
 
-            if (!$handlers[url]) {
-                $handlers[url] = [];
+            var task = createBundleTask(id, handlers);
+            if (!task) {
+                id = anchor(id).href;
+                task = createFileTask(id);
             }
-            $handlers[url].push(handlers);
 
-            var cachedFile = $files[url];
-            if (cachedFile && cachedFile.state !== 'failure') {
-                if (cachedFile.state === 'success') {
-                    scheduleTask(cacheTask(url));
-                }
-            } else if (typeof (url) === 'string') {
-                scheduleTask(isLocal || anchor(url).hostname !== location.hostname || !newXhr
-                        ? scriptTagTask(url)
-                        : ajaxTask(url)
-                );
-            }
+            addHandlers(id, handlers);
+            scheduleTask(task);
+            $lastAdded = id;
         }
 
         return jsRequest;
+    }
+
+    function createBundleTask(id, handlers) {
+        var cached = $files[id];
+        if (cached && cached.state !== 'failure') {
+            return cached.state === 'success' ? cacheTask(id) : noop;
+        }
+
+        var bundle = $bundles[id];
+        if (bundle) {
+            var i, len = bundle.length;
+            for (i = 0; i < len; i++) {
+                addHandlers(parseId(bundle[i]), handlers);
+            }
+            return bundleTask(id);
+        }
+
+        return null;
+    }
+
+    function createFileTask(url) {
+        var cached = $files[url];
+        if (cached && cached.state !== 'failure') {
+            return cached.state === 'success' ? cacheTask(url) : noop;
+        }
+
+        if (!isLocal && anchor(url).hostname === location.hostname && newXhr) {
+            return ajaxTask(url);
+        }
+
+        return scriptTagTask(url);
     }
 
     /**
@@ -147,7 +177,7 @@
          *     reference of 'action'
          */
         var fn = action;
-        if (typeof fn === 'string') {
+        if (isString(fn)) {
             var args = arguments;
             fn = function () {
                 jsRequest.load.apply(this, args);
@@ -166,6 +196,17 @@
             $handlers[$lastAdded].push({ success: fn });
         }
 
+        return jsRequest;
+    }
+
+    /**
+     * Register a bundle
+     * @param {string} name
+     * @param {(string[]|string)} urls
+     * @returns {Function}
+     */
+    function bundle(name, urls) {
+        $bundles[name] = isArray(urls) ? urls : [urls];
         return jsRequest;
     }
 
@@ -297,7 +338,8 @@
 
                     case 3:
                         // Progress
-                        callHandlers(url, 'progress', [url, 100 * xhr.response.length / total, xhr, 'ajax', e]);
+                        var progress = total !== 0 ? 100 * xhr.response.length / total : 0;
+                        callHandlers(url, 'progress', [url, progress, xhr, 'ajax', e]);
                         break;
 
                     case 4: {
@@ -330,7 +372,6 @@
     /**
      * Loads the script from cache
      * @param url
-     * @param options
      * @returns {Function}
      */
     function cacheTask(url) {
@@ -351,6 +392,50 @@
             callHandlers(url, 'success', [url, null, 'cache', null]);
             $handlers[url] = [];    // Wipe all handlers
         };
+    }
+
+    function bundleTask(name) {
+        return function () {
+            var bundle = $bundles[name];
+            var files = {};
+            for (var id in bundle) {
+                if (bundle.hasOwnProperty(id)) {
+                    files[id] = true;
+                }
+            }
+
+            var failed = false;
+            var count = 0;
+            var i, len = bundle.length;
+            for (i = 0; i < len; i++) {
+                load(bundle[i], {
+                    success: function (id) {
+                        check(id);
+                        callHandlers(name, 'progress', [name, 100 * count / len, null, 'bundle', null]);
+
+                        if (count === len) {
+                            callHandlers(name, failed ? 'failure' : 'success', [name, null, 'bundle', null]);
+                            $handlers[name] = [];   // Wipe all handlers
+                        }
+                    },
+                    failure: function (id) {
+                        check(id);
+                        failed = true;
+                    }
+                });
+            }
+
+            function check(id) {
+                if (!files[id]) {
+                    files[id] = true;
+                    count++;
+                }
+            }
+        };
+    }
+
+    function parseId(id) {
+        return $bundles[id] ? id : anchor(id).href;
     }
 
     /**
@@ -386,8 +471,27 @@
         };
     }
 
+    function addHandlers(id, handlers) {
+        if (!$handlers[id]) {
+            $handlers[id] = [];
+        }
+        $handlers[id].push(handlers);
+    }
+
     function isFunction(fn) {
-        return fn instanceof Function;
+        return type(fn) === 'Function';
+    }
+
+    function isArray(arr) {
+        return type(arr) === 'Array';
+    }
+
+    function isString(str) {
+        return type(str) === 'String';
+    }
+
+    function type(obj) {
+        return Object.prototype.toString.call(obj).slice(8, -1);
     }
 
     function isReady() {

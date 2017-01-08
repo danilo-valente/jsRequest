@@ -63,8 +63,8 @@ gulp.task('default', ['uglify'], function () {
     throttle({
         local_port: port + 1,
         remote_port: port,
-        upstream: 1024 * 10,
-        downstream: 1024 * 100,
+        upstream: 4096 * 10,
+        downstream: 4096 * 100,
         keep_alive: true
     });
 });
